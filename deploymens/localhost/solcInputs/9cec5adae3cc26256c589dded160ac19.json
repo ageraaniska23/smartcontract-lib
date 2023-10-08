@@ -1,0 +1,35 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/Library.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity 0.8.13;\n\ncontract Library {\n    address public admin;\n    \n    struct Book {\n        uint256 isbn;\n        string title;\n        uint16 year;\n        string author;\n    }\n    \n    mapping(uint256 => Book) public books;\n    uint256 public bookList;\n    bool public isBookUpdatePending;\n    Book public pendingBookData;\n    \n    event BookAdded(uint256 isbn, string title, uint16 year, string author);\n    event BookDeleted(uint256 isbn);\n\n    modifier onlyAdmin() {\n        require(msg.sender == admin, \"Only admin can call this function\");\n        _;\n    }\n    \n    constructor() {\n        admin = msg.sender;\n    }\n\n    function setAdmin(address _admin) public {\n        require(msg.sender == admin, \"Only current admin can set a new admin\");\n        admin = _admin;\n    }\n\n    function addBook(uint256 _isbn, string memory _title, uint16 _year, string memory _author) public onlyAdmin {\n        require(_isbn > 0, \"Invalid ISBN code\");\n        pendingBookData = Book({\n            isbn: _isbn,\n            title: _title,\n            year: _year,\n            author: _author\n        });\n        isBookUpdatePending = true;\n    }\n\n    function updateBook() public onlyAdmin {\n        require(isBookUpdatePending, \"No pending book data to update\");\n        books[pendingBookData.isbn] = pendingBookData;\n        bookList++;\n        pendingBookData = Book({\n            isbn: 0,\n            title: \"\",\n            year: 0,\n            author: \"\"\n        });\n        isBookUpdatePending = false;\n        emit BookAdded(pendingBookData.isbn, pendingBookData.title, pendingBookData.year, pendingBookData.author);\n    }\n\n    function deleteBook(uint256 _isbn) public onlyAdmin {\n        require(books[_isbn].isbn != 0, \"Book with specified ISBN not found\");\n        delete books[_isbn];\n        bookList--;\n        emit BookDeleted(_isbn);\n    }\n\n    function getBook(uint256 _isbn) public view returns (Book memory) {\n        require(books[_isbn].isbn != 0, \"Book with specified ISBN not found\");\n        return books[_isbn];\n    }\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}
